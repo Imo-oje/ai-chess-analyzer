@@ -1,7 +1,7 @@
 import "./App.css";
 import { type NewBoardState } from "./board.class";
 import Board from "./board";
-import GameControls from "./game-controls";
+// import GameControls from "./game-controls";
 import { useState } from "react";
 import { createBoard, piecesMap } from "./utils";
 function App() {
@@ -46,9 +46,9 @@ function App() {
     }
   }
 
-  function resetGame() {
-    setBoard(createBoard(piecesMap));
-  }
+  // function resetGame() {
+  //   setBoard(createBoard(piecesMap));
+  // }
 
   return (
     <main>
