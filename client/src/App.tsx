@@ -16,9 +16,6 @@ function App() {
     setBoard((prevBoard) =>
       prevBoard.map((row) =>
         row.map((square) => {
-          if (square.squareId === from) {
-            return { ...square, piece: null }; // clear origin square
-          }
           if (square.squareId === to) {
             const fromSquare = prevBoard
               .flat()
@@ -27,6 +24,10 @@ function App() {
               ...square,
               piece: fromSquare?.piece || null,
             }; // set target
+          }
+
+          if (square.squareId === from) {
+            return { ...square, piece: null }; // clear origin square
           }
           return square;
         })
