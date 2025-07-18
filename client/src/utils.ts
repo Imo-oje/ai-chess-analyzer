@@ -26,6 +26,15 @@ export const piecesMap: any = {
   bP,
 };
 
+export type Piece = { name: string; icon: string } | null;
+
+export type Square = {
+  name: string;
+  squareId: string;
+  color: string;
+  piece: Piece;
+};
+
 export function createBoard(piecesMap: any) {
   const bd = [];
   const files = "abcdefgh"; // Board column
@@ -48,9 +57,17 @@ export function createBoard(piecesMap: any) {
         piece = `${prefix}${backRank[file]}`;
       }
 
-      row.push({ squareId, color, piece: piece ? piecesMap[piece] : null });
+      row.push({
+        squareId,
+        color,
+        piece: piece ? { icon: piecesMap[piece], name: piece as string } : null,
+      });
     }
     bd.push(row);
   }
   return bd;
+}
+
+export function hasSameColor(pieceOne: Piece, PieceTwo: Piece) {
+  return pieceOne?.name[0] === PieceTwo?.name[0];
 }

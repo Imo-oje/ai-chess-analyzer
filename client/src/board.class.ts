@@ -3,7 +3,7 @@
 export type NewBoardState = {
   squareId: string;
   color: string;
-  piece: string | null;
+  piece: { name: string; icon: string } | null;
 }[][];
 
 //const BOARD: NewBoardState = createBoard(piecesMap);
