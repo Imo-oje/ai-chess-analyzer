@@ -12,7 +12,7 @@ function App() {
     piece: { name: string; icon: string } | null;
   } | null>(null);
 
-  function movePiece(color: string, name: string, from: string, to: string) {
+  function movePiece(_color: string, _name: string, from: string, to: string) {
     setBoard((prevBoard) =>
       prevBoard.map((row) =>
         row.map((square) => {
