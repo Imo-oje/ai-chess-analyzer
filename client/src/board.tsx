@@ -4,10 +4,12 @@ function Board({
   board,
   handleClick,
   viewLabel,
+  effects,
 }: {
   board: NewBoardState;
   handleClick: Function;
   viewLabel: boolean;
+  effects: { shakingSquareId: string | null };
 }) {
   return (
     <div className="board">
@@ -17,7 +19,9 @@ function Board({
             <div
               onClick={() => handleClick(square)}
               key={square.squareId}
-              className={`square ${square.color}`}
+              className={`square ${square.color} ${
+                effects.shakingSquareId === square.squareId ? "shake" : ""
+              }`}
             >
               {square.piece ? (
                 <img src={square.piece.icon} />

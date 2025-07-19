@@ -31,6 +31,7 @@ export type Piece = { name: string; icon: string } | null;
 export type Square = {
   name: string;
   squareId: string;
+  coordinate: [number, number];
   color: string;
   piece: Piece;
 };
@@ -45,12 +46,10 @@ export function createBoard(piecesMap: any) {
       const color = (rank + file) % 2 === 0 ? "white" : "black";
       let piece = null;
 
-      // Add pawns to respective ranks
+      // Add all pieces to respective ranks
       if (rank === 2) piece = "wP";
       else if (rank === 7) piece = "bP";
-
-      // Add all back rank pieces
-      if (rank === 1 || rank === 8) {
+      else if (rank === 1 || rank === 8) {
         const isWhite = rank === 1;
         const prefix = isWhite ? "w" : "b";
         const backRank = ["R", "N", "B", "Q", "K", "B", "N", "R"];
@@ -60,6 +59,7 @@ export function createBoard(piecesMap: any) {
       row.push({
         squareId,
         color,
+        coordinate: [file + 1, rank] as [number, number],
         piece: piece ? { icon: piecesMap[piece], name: piece as string } : null,
       });
     }

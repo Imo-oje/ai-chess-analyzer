@@ -1,8 +1,9 @@
 //import { createBoard, piecesMap } from "./utils";
 
-export type NewBoardState = {
+export type BoardState = {
   squareId: string;
   color: string;
+  coordinate: [number, number];
   piece: { name: string; icon: string } | null;
 }[][];
 
