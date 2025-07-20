@@ -71,29 +71,6 @@ export default function findValidMoves(
 
       // Captures (diagonal moves)
 
-      ////////////////
-
-      // const captureSideAndDirection = [
-      //   { x: -1, y: direction },
-      //   { x: 1, y: direction },
-      // ];
-
-      // for (const sideAndDirection of captureSideAndDirection) {
-      //   const capturePosition = {
-      //     x: sideAndDirection.x,
-      //     y: sideAndDirection.y,
-      //   };
-
-      //   if (
-      //     capturePosition.x >= 1 &&
-      //     capturePosition.x <= 8 &&
-      //     capturePosition.y >= 1 &&
-      //     capturePosition.y <= 8
-      //   ) {
-      //     console.log("captPOS: ", capturePosition);
-      //   }
-      // }
-
       const captureOffsets = [
         [-1, direction], // left capture
         [1, direction], // right capture
@@ -117,8 +94,6 @@ export default function findValidMoves(
           }
         }
       }
-
-      //////////////
 
       return VALID_MOVES.length > 0 ? VALID_MOVES : false;
 
