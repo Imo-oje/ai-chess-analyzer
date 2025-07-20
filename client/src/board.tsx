@@ -1,4 +1,5 @@
-import type { NewBoardState } from "./board.class";
+import type { BoardState } from "./board.class";
+import type { Square } from "./utils";
 
 function Board({
   board,
@@ -6,10 +7,13 @@ function Board({
   viewLabel,
   effects,
 }: {
-  board: NewBoardState;
+  board: BoardState;
   handleClick: Function;
   viewLabel: boolean;
-  effects: { shakingSquareId: string | null };
+  effects: {
+    shakingSquareId: string | null;
+    validMoves: Square[] | false;
+  };
 }) {
   return (
     <div className="board">
@@ -21,6 +25,14 @@ function Board({
               key={square.squareId}
               className={`square ${square.color} ${
                 effects.shakingSquareId === square.squareId ? "shake" : ""
+              } ${
+                (effects.validMoves || []).some(
+                  (move) =>
+                    move.coordinate[0] === square.coordinate[0] &&
+                    move.coordinate[1] === square.coordinate[1]
+                )
+                  ? "square_highlight"
+                  : ""
               }`}
             >
               {square.piece ? (
@@ -39,3 +51,13 @@ function Board({
 }
 
 export default Board;
+
+// ${
+//                 (effects.validMoves as { x: number; y: number }[]).some(
+//                   (move) =>
+//                     move.x === square.coordinate[0] &&
+//                     move.y === square.coordinate[1]
+//                 )
+//                   ? "highlight"
+//                   : ""
+//               }

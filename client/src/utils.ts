@@ -29,7 +29,6 @@ export const piecesMap: any = {
 export type Piece = { name: string; icon: string } | null;
 
 export type Square = {
-  name: string;
   squareId: string;
   coordinate: [number, number];
   color: string;

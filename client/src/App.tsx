@@ -10,20 +10,17 @@ function App() {
   const [board, setBoard] = useState<BoardState>(createBoard(piecesMap));
   const [viewLabel, setViewLabel] = useState(false);
   const [shakingSquareId, setShakingSquareId] = useState<string | null>(null);
+  const [validMoves, setValidMoves] = useState<Square[] | false>(false);
   const [selectedPiece, setSelectedPiece] = useState<{
     squareId: string | null;
     coordinate: [number, number];
     piece: { name: string; icon: string } | null;
   } | null>(null);
 
-  function movePiece(_color: string, _name: string, from: string, to: string) {
+  function movePiece(_color: string, from: string, to: string) {
     setBoard((prevBoard) =>
       prevBoard.map((row) =>
         row.map((square) => {
-          if (square.squareId === from) {
-            return { ...square, piece: null }; // clear origin square
-          }
-
           if (square.squareId === to) {
             const fromSquare = prevBoard
               .flat()
@@ -33,34 +30,57 @@ function App() {
               piece: fromSquare?.piece || null,
             }; // set target
           }
-
+          if (square.squareId === from) {
+            return { ...square, piece: null }; // clear origin square
+          }
           return square;
         })
       )
     );
     setSelectedPiece(null);
+    setValidMoves(false);
   }
 
   function handleClick(square: Square) {
     setShakingSquareId(square.squareId);
 
-    const validMoves = findValidMoves(board, square.coordinate);
-    console.log("valid moves:", validMoves);
+    let nextValidMoves: Square[] | false = false;
+
+    if (square.piece) {
+      nextValidMoves = findValidMoves(board, square.coordinate);
+      setValidMoves(nextValidMoves);
+    }
+
+    console.log("NextvalidMovesTop", nextValidMoves);
+    console.log("valid mocesssssss", validMoves);
+
+    console.log("selected:", selectedPiece);
 
     if (selectedPiece) {
-      // Don't capture yourself / move yourself to yourself
-      if (square.squareId === selectedPiece.squareId) {
+      nextValidMoves = findValidMoves(board, selectedPiece.coordinate);
+
+      if (square.piece) {
         setSelectedPiece({
           coordinate: square.coordinate,
           squareId: square.squareId,
           piece: square.piece,
         });
+        setValidMoves(findValidMoves(board, square.coordinate));
+      }
+
+      //===========
+      // Restrict movement for all invalid moves attempt
+      //===========
+
+      // Don't capture yourself / move yourself to yourself
+      if (square.squareId === selectedPiece.squareId) {
+        setSelectedPiece(null);
+        setValidMoves(false);
         return;
       }
 
       // Don't capture pieces with the same color
       if (hasSameColor(square.piece, selectedPiece.piece)) {
-        // Let last clicked piece be the selected piece
         setSelectedPiece({
           coordinate: square.coordinate,
           squareId: square.squareId,
@@ -80,15 +100,24 @@ function App() {
         })();
 
         if (!isKnightMove) return;
-
-        //moveKnight();
-
-        console.log("Knight detected", isKnightMove);
+        //console.log("Knight detected", isKnightMove);
       }
 
-      return movePiece(
+      // If its a pawn
+      if (selectedPiece.piece?.name[1] === "P") {
+        const [x, y] = square.coordinate;
+        const isPawnMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
+
+        if (!isPawnMove) return;
+      }
+
+      // Move the piece if its a valid move
+      movePiece(
         square.color,
-        square.name,
         selectedPiece.squareId as string,
         square.squareId
       );
@@ -100,13 +129,17 @@ function App() {
       });
     }
 
-    console.log("SQUARE:", square);
-    console.log("valid moves:", validMoves);
+    //console.log("SQUARE:", square);
+    //console.log("valid moves:", validMoves);
     setTimeout(() => setShakingSquareId(null), 300);
   }
 
   function resetGame() {
     setBoard(createBoard(piecesMap));
+    setValidMoves(false);
+    setViewLabel(false);
+    setShakingSquareId(null);
+    setSelectedPiece(null);
   }
 
   function toggleLabels() {
@@ -119,7 +152,10 @@ function App() {
         board={board}
         handleClick={handleClick}
         viewLabel={viewLabel}
-        effects={{ shakingSquareId: shakingSquareId }}
+        effects={{
+          shakingSquareId: shakingSquareId,
+          validMoves: validMoves,
+        }}
       />
       <GameControls resetGame={resetGame} toggleLabels={toggleLabels} />
     </main>
