@@ -1,3 +1,3 @@
-function Square() {
-  return <p>square</p>;
-}
+// function Square() {
+//   return <p>square</p>;
+// }
