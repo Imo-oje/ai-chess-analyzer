@@ -97,11 +97,7 @@ export function getKingSquares(squareId: string, board: BoardState): string[] {
 
     if (newFileIndex >= 0 && newFileIndex < 8 && newRank >= 1 && newRank <= 8) {
       const newSquare = files[newFileIndex] + newRank;
-      if (
-        board
-          .flat()
-          .some((sq) => sq.squareId === newSquare && sq.piece === null)
-      )
+      if (board.flat().some((sq) => sq.squareId === newSquare))
         emptySquares.push(newSquare);
       console.log("emptySquares: ", emptySquares);
     }
