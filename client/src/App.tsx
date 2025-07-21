@@ -115,6 +115,54 @@ function App() {
         if (!isPawnMove) return;
       }
 
+      // If its a Bishop
+      if (selectedPiece.piece?.name[1] === "B") {
+        const [x, y] = square.coordinate;
+        const isBishopMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
+
+        if (!isBishopMove) return;
+      }
+
+      // If its a Rook
+      if (selectedPiece.piece?.name[1] === "R") {
+        const [x, y] = square.coordinate;
+        const isRookMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
+
+        if (!isRookMove) return;
+      }
+
+      // If its a Queen
+      if (selectedPiece.piece?.name[1] === "Q") {
+        const [x, y] = square.coordinate;
+        const queenMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
+
+        if (!queenMove) return;
+      }
+
+      // If its a King
+      if (selectedPiece.piece?.name[1] === "K") {
+        const [x, y] = square.coordinate;
+        const kingMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
+
+        if (!kingMove) return;
+      }
+
       // Move the piece if its a valid move
       movePiece(
         square.color,

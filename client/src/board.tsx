@@ -51,13 +51,3 @@ function Board({
 }
 
 export default Board;
-
-// ${
-//                 (effects.validMoves as { x: number; y: number }[]).some(
-//                   (move) =>
-//                     move.x === square.coordinate[0] &&
-//                     move.y === square.coordinate[1]
-//                 )
-//                   ? "highlight"
-//                   : ""
-//               }

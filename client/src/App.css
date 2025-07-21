@@ -61,7 +61,16 @@ section.game-controls {
 }
 
 .square_highlight {
-  background-color: cornflowerblue !important;
+  /* background: radial-gradient(
+    circle,
+    rgba(100, 149, 237, 0.6) 0%,
+    transparent 70%
+  ); */
+  background: radial-gradient(
+    circle,
+    rgba(0, 200, 150, 0.4) 0%,
+    transparent 70%
+  );
   transition: all 300ms ease-in-out;
 }
 
