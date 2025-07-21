@@ -1,14 +1,24 @@
 import type { BoardState } from "./board.class";
-import type { Square } from "./utils";
+import { getKingSquares, type Square } from "./utils";
 
 export default function findValidMoves(
   board: BoardState,
   coordinate: [number, number]
 ): Square[] | false | false {
   // Find the piece
-  const piece = board
+  const square = board
     .flat()
-    .find((square) => square.coordinate === coordinate)?.piece;
+    .find((square) => square.coordinate === coordinate);
+
+  if (!square) return [];
+
+  const oppKing = board // Opponents king
+    .flat()
+    .find((sq) => sq.piece?.name[1] === "K" && sq.squareId !== square.squareId);
+
+  if (!oppKing) return [];
+
+  const piece = square.piece;
 
   const color = piece?.name[0].toLowerCase();
 
@@ -273,6 +283,8 @@ export default function findValidMoves(
         [0, -1], // bottom
       ];
 
+      const oppKingSquares = getKingSquares(oppKing.squareId, board);
+
       for (const [dx, dy] of directions) {
         let x = kingX + dx;
         let y = kingY + dy;
@@ -287,7 +299,9 @@ export default function findValidMoves(
                 sq.piece?.name[0].toLowerCase() !== color
             );
 
-          if (square) VALID_MOVES.push(square);
+          if (square && !oppKingSquares.includes(square.squareId))
+            // Mkae sure both kings are 1 file / rank apart
+            VALID_MOVES.push(square);
         }
       }
 

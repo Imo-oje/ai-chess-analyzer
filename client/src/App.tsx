@@ -52,9 +52,9 @@ function App() {
     }
 
     console.log("NextvalidMovesTop", nextValidMoves);
-    console.log("valid mocesssssss", validMoves);
+    // console.log("valid mocesssssss", validMoves);
 
-    console.log("selected:", selectedPiece);
+    //console.log("selected:", selectedPiece);
 
     if (selectedPiece) {
       nextValidMoves = findValidMoves(board, selectedPiece.coordinate);

@@ -10,6 +10,7 @@ import bQ from "./assets/pieces/bQ.svg";
 import bN from "./assets/pieces/bN.svg";
 import bB from "./assets/pieces/bB.svg";
 import bR from "./assets/pieces/bR.svg";
+import type { BoardState } from "./board.class";
 
 export const piecesMap: any = {
   wP,
@@ -69,4 +70,42 @@ export function createBoard(piecesMap: any) {
 
 export function hasSameColor(pieceOne: Piece, PieceTwo: Piece) {
   return pieceOne?.name[0] === PieceTwo?.name[0];
+}
+
+export function getKingSquares(squareId: string, board: BoardState): string[] {
+  const files = "abcdefgh";
+  const file = squareId[0];
+  const rank = parseInt(squareId[1] as string);
+
+  const directions = [
+    [1, 0],
+    [-1, 0], // vertical
+    [0, 1],
+    [0, -1], // horizontal
+    [1, 1],
+    [1, -1], // diagonal
+    [-1, 1],
+    [-1, -1],
+  ];
+
+  const fileIndex = files.indexOf(file as string);
+  const emptySquares: string[] = [];
+
+  for (const [df, dr] of directions) {
+    const newFileIndex = fileIndex + df;
+    const newRank = rank + dr;
+
+    if (newFileIndex >= 0 && newFileIndex < 8 && newRank >= 1 && newRank <= 8) {
+      const newSquare = files[newFileIndex] + newRank;
+      if (
+        board
+          .flat()
+          .some((sq) => sq.squareId === newSquare && sq.piece === null)
+      )
+        emptySquares.push(newSquare);
+      console.log("emptySquares: ", emptySquares);
+    }
+  }
+
+  return emptySquares;
 }
