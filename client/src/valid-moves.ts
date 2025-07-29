@@ -6,18 +6,18 @@ import {
   getSlidingMoves,
   getKingMoves,
 } from "./piece-moves";
-
+import { isInCheck, simulateMove } from "./utils";
 export default function findValidMoves(
   board: BoardState,
   coordinate: [number, number]
-): Square[] | false {
+): Square[] | [] {
   const square = board
     .flat()
     .find(
       (sq) =>
         sq.coordinate[0] === coordinate[0] && sq.coordinate[1] === coordinate[1]
     );
-  if (!square || !square.piece) return false;
+  if (!square || !square.piece) return [];
 
   const piece = square.piece;
   const color = piece.name[0].toLowerCase();
@@ -29,33 +29,37 @@ export default function findValidMoves(
       (sq) =>
         sq.piece?.name[1] === "K" && sq.piece.name[0].toLowerCase() !== color
     );
-  if (!oppKing) return false;
+  if (!oppKing) return [];
+
+  let normalMoves: Square[] = [];
 
   switch (pieceType) {
     case "P":
-      return getPawnMoves(board, coordinate, color) || false;
+      normalMoves = getPawnMoves(board, coordinate, color) || [];
+      break;
     case "N":
-      return getKnightMoves(board, coordinate) || false;
+      normalMoves = getKnightMoves(board, coordinate) || [];
+      break;
     case "B":
-      return (
+      normalMoves =
         getSlidingMoves(board, coordinate, color, [
           [1, 1],
           [-1, 1],
           [1, -1],
           [-1, -1],
-        ]) || false
-      );
+        ]) || [];
+      break;
     case "R":
-      return (
+      normalMoves =
         getSlidingMoves(board, coordinate, color, [
           [1, 0],
           [-1, 0],
           [0, 1],
           [0, -1],
-        ]) || false
-      );
+        ]) || [];
+      break;
     case "Q":
-      return (
+      normalMoves =
         getSlidingMoves(board, coordinate, color, [
           [1, 1],
           [-1, 1],
@@ -65,11 +69,15 @@ export default function findValidMoves(
           [-1, 0],
           [0, 1],
           [0, -1],
-        ]) || false
-      );
+        ]) || [];
+      break;
     case "K":
-      return getKingMoves(board, coordinate, color, oppKing.squareId) || false;
-    default:
-      return false;
+      return getKingMoves(board, coordinate, color, oppKing.squareId) || [];
   }
+  const legalMoves = normalMoves.filter((targetSquare) => {
+    const newBoard = simulateMove(board, coordinate, targetSquare.coordinate);
+    return !isInCheck(newBoard, color as "w" | "b");
+  });
+
+  return legalMoves;
 }

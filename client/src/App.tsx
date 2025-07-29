@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   createBoard,
   hasSameColor,
+  markCheckedKing,
   piecesMap,
   type Piece,
   type Square,
@@ -20,7 +21,7 @@ function App() {
     selectedPieceColor: string;
     squareId: string;
   } | null>(null);
-  const [validMoves, setValidMoves] = useState<Square[] | false>(false);
+  const [validMoves, setValidMoves] = useState<Square[]>([]);
   const [isPromoting, setIsPromoting] = useState<Square | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<{
     squareId: string;
@@ -29,10 +30,6 @@ function App() {
   } | null>(null);
 
   let NEW_PIECE: Piece = null;
-
-  /////
-  //const attacked = getEnemyAttackingSquare(board, "w");
-  /////
 
   function movePiece(from: string, to: string) {
     console.log("while moving", isPromoting);
@@ -57,7 +54,7 @@ function App() {
     );
     setSelectedPiece(null);
     setIsPromoting(null);
-    setValidMoves(false);
+    setValidMoves([]);
   }
 
   function handleClick(square: Square, promotingTo?: string) {
@@ -66,17 +63,18 @@ function App() {
       squareId: square.squareId,
     });
 
-    let nextValidMoves: Square[] | false = false;
+    let nextValidMoves: Square[] = [];
 
     if (square.piece) {
       nextValidMoves = findValidMoves(board, square.coordinate);
       setValidMoves(nextValidMoves);
     }
 
-    // console.log("NextvalidMovesTop", nextValidMoves);
-    // console.log("valid mocesssssss", validMoves);
-
-    //console.log("selected:", selectedPiece);
+    const updatedBoard = markCheckedKing(
+      board,
+      square.piece?.name[0] as "w" | "b"
+    );
+    setBoard(updatedBoard);
 
     if (selectedPiece) {
       nextValidMoves = findValidMoves(board, selectedPiece.coordinate);
@@ -90,7 +88,7 @@ function App() {
         setValidMoves(findValidMoves(board, square.coordinate));
       } else {
         setSelectedPiece(null);
-        setValidMoves(false);
+        setValidMoves([]);
       }
 
       //===========
@@ -100,7 +98,7 @@ function App() {
       // Don't capture yourself / move yourself to yourself
       if (square.squareId === selectedPiece.squareId) {
         setSelectedPiece(null);
-        setValidMoves(false);
+        setValidMoves([]);
         return;
       }
 
@@ -113,6 +111,9 @@ function App() {
         });
         return;
       }
+
+      // Don't capture king
+      if (selectedPiece.piece && square.piece?.name[1] === "K") return;
 
       if (isPromoting) {
         console.log("promoting from", square);
@@ -140,13 +141,12 @@ function App() {
 
       // If its a knight
       if (selectedPiece.piece?.name[1] === "N") {
-        const isKnightMove = (() => {
-          const [dx, dy] = [
-            Math.abs(square.coordinate[0] - selectedPiece.coordinate[0]),
-            Math.abs(square.coordinate[1] - selectedPiece.coordinate[1]),
-          ];
-          return dx + dy === 3 && dx !== 0 && dy !== 0;
-        })();
+        const [x, y] = square.coordinate;
+        const isKnightMove =
+          nextValidMoves &&
+          nextValidMoves.some(
+            (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+          );
 
         if (!isKnightMove) return;
         //console.log("Knight detected", isKnightMove);
@@ -247,7 +247,7 @@ function App() {
 
   function resetGame() {
     setBoard(createBoard(piecesMap));
-    setValidMoves(false);
+    setValidMoves([]);
     setViewLabel(false);
     setSelectedPiece(null);
     setclickedPiece(null);
@@ -260,6 +260,9 @@ function App() {
 
   return (
     <main className="main">
+      <div>
+        <h2 className="love">Made with love by savvy</h2>
+      </div>
       <Board
         board={board}
         handleClick={handleClick}
@@ -268,9 +271,6 @@ function App() {
           shakingSquareId: clickedPiece?.squareId as string,
           sourcePieceColor: clickedPiece?.selectedPieceColor as string,
           validMoves,
-          // (validMoves || []).filter(
-          //   (mvs) => mvs.piece?.name[0] !== "w"
-          // ),
         }}
       />
       <GameControls resetGame={resetGame} toggleLabels={toggleLabels} />

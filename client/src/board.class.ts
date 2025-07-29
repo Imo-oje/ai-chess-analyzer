@@ -1,11 +1,8 @@
 //import { createBoard, piecesMap } from "./utils";
 
-export type BoardState = {
-  squareId: string;
-  color: string;
-  coordinate: [number, number];
-  piece: { name: string; icon: string } | null;
-}[][];
+import type { Square } from "./utils";
+
+export type BoardState = Square[][];
 
 //const BOARD: NewBoardState = createBoard(piecesMap);
 

@@ -34,6 +34,7 @@ export type Square = {
   squareId: string;
   coordinate: [number, number];
   color: string;
+  isChecked?: boolean;
   piece: Piece;
 };
 
@@ -73,6 +74,7 @@ export function hasSameColor(pieceOne: Piece, PieceTwo: Piece) {
   return pieceOne?.name[0] === PieceTwo?.name[0];
 }
 
+// returns the squares around a king
 export function getKingSquares(squareId: string, board: BoardState): string[] {
   const files = "abcdefgh";
   const file = squareId[0];
@@ -105,6 +107,12 @@ export function getKingSquares(squareId: string, board: BoardState): string[] {
   }
 
   return emptySquares;
+}
+// returns the square containig the king
+export function getKingSquare(board: BoardState, color: "w" | "b") {
+  return board
+    .flat()
+    .find((sq) => sq.piece?.name[1] === "K" && sq.piece.name[0] === color);
 }
 
 export function getPawnAttackingSquares(
@@ -191,3 +199,63 @@ export function getEnemyAttackingSquare(board: BoardState, enemyColor: string) {
 // function isSquareAttacked(square: Square, board: BoardState) {
 //   const enemyMoves = getAllPosibleMoves(board, attackerColor);
 // }
+
+// Clone the board and simulate move manually then return simulated board
+export function simulateMove(
+  board: BoardState,
+  from: [number, number],
+  to: [number, number]
+): BoardState {
+  // copy board
+  const newBoard: BoardState = board.map((row) =>
+    row.map((square) => ({
+      ...square,
+      piece: square.piece ? { ...square.piece } : null,
+    }))
+  );
+
+  const fromSquare = newBoard
+    .flat()
+    .find((sq) => sq.coordinate[0] === from[0] && sq.coordinate[1] === from[1]);
+  const toSquare = newBoard
+    .flat()
+    .find((sq) => sq.coordinate[0] === to[0] && sq.coordinate[1] === to[1]);
+
+  if (!fromSquare || !toSquare || !fromSquare.piece) return newBoard;
+
+  toSquare.piece = { ...fromSquare.piece };
+  fromSquare.piece = null;
+
+  return newBoard;
+}
+
+export function isInCheck(board: BoardState, color: "w" | "b") {
+  const kingSquare = getKingSquare(board, color);
+  const opponentColor = color === "w" ? "b" : "w";
+
+  const allAttackedSquares = getEnemyAttackingSquare(board, opponentColor);
+  return allAttackedSquares.some(
+    (sq) => sq.coordinate === kingSquare?.coordinate
+  );
+}
+
+export function markCheckedKing(
+  board: BoardState,
+  color: "w" | "b"
+): BoardState {
+  const newBoard = board.map((row) =>
+    row.map((sq) => ({
+      ...sq,
+      isChecked: false, // clear previous
+    }))
+  );
+
+  if (isInCheck(newBoard, color)) {
+    const king = newBoard.flat().find((sq) => sq.piece?.name === `${color}K`);
+    if (king) {
+      king.isChecked = true;
+    }
+  }
+
+  return newBoard;
+}
