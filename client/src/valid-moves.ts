@@ -99,7 +99,7 @@ export default function findValidMoves(
               square.piece.name[0].toLowerCase() !== color // opponent piece
           );
 
-          if (captureSquare) {
+          if (captureSquare && captureSquare.piece?.name[1] !== "K") {
             VALID_MOVES.push(captureSquare);
           }
         }

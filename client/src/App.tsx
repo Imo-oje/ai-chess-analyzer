@@ -3,21 +3,32 @@ import { type BoardState } from "./board.class";
 import Board from "./board";
 import GameControls from "./game-controls";
 import { useState } from "react";
-import { createBoard, hasSameColor, piecesMap, type Square } from "./utils";
+import {
+  createBoard,
+  hasSameColor,
+  piecesMap,
+  type Piece,
+  type Square,
+} from "./utils";
 import findValidMoves from "./valid-moves";
+import PromotionUI from "./promotion";
 
 function App() {
   const [board, setBoard] = useState<BoardState>(createBoard(piecesMap));
   const [viewLabel, setViewLabel] = useState(false);
   const [shakingSquareId, setShakingSquareId] = useState<string | null>(null);
   const [validMoves, setValidMoves] = useState<Square[] | false>(false);
+  const [isPromoting, setIsPromoting] = useState<Square | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<{
-    squareId: string | null;
+    squareId: string;
     coordinate: [number, number];
     piece: { name: string; icon: string } | null;
   } | null>(null);
 
-  function movePiece(_color: string, from: string, to: string) {
+  let NEW_PIECE: Piece = null;
+
+  function movePiece(from: string, to: string) {
+    console.log("while moving", isPromoting);
     setBoard((prevBoard) =>
       prevBoard.map((row) =>
         row.map((square) => {
@@ -27,7 +38,7 @@ function App() {
               .find((sq) => sq.squareId === from);
             return {
               ...square,
-              piece: fromSquare?.piece || null,
+              piece: isPromoting ? NEW_PIECE : fromSquare?.piece || null,
             }; // set target
           }
           if (square.squareId === from) {
@@ -38,10 +49,11 @@ function App() {
       )
     );
     setSelectedPiece(null);
+    setIsPromoting(null);
     setValidMoves(false);
   }
 
-  function handleClick(square: Square) {
+  function handleClick(square: Square, promotingTo?: string) {
     setShakingSquareId(square.squareId);
 
     let nextValidMoves: Square[] | false = false;
@@ -51,7 +63,7 @@ function App() {
       setValidMoves(nextValidMoves);
     }
 
-    console.log("NextvalidMovesTop", nextValidMoves);
+    // console.log("NextvalidMovesTop", nextValidMoves);
     // console.log("valid mocesssssss", validMoves);
 
     //console.log("selected:", selectedPiece);
@@ -66,6 +78,9 @@ function App() {
           piece: square.piece,
         });
         setValidMoves(findValidMoves(board, square.coordinate));
+      } else {
+        setSelectedPiece(null);
+        setValidMoves(false);
       }
 
       //===========
@@ -89,6 +104,30 @@ function App() {
         return;
       }
 
+      if (isPromoting) {
+        console.log("promoting from", square);
+        console.log("promoting to", promotingTo);
+        console.log("promotion happens on", selectedPiece);
+      }
+
+      console.log("currently selected", selectedPiece);
+
+      // Handle Promotion
+      if (isPromoting) {
+        const newPiece = Object.entries(piecesMap).filter(
+          ([key]) => key === promotingTo
+        );
+
+        const replceMent: Piece = {
+          name: promotingTo as string,
+          icon: newPiece[0][1] as string,
+        };
+
+        NEW_PIECE = replceMent;
+        console.log("newwwwwwwwwwwww", NEW_PIECE);
+        return movePiece(square.squareId, selectedPiece.squareId);
+      }
+
       // If its a knight
       if (selectedPiece.piece?.name[1] === "N") {
         const isKnightMove = (() => {
@@ -106,6 +145,7 @@ function App() {
       // If its a pawn
       if (selectedPiece.piece?.name[1] === "P") {
         const [x, y] = square.coordinate;
+        const color = selectedPiece.piece?.name[0];
         const isPawnMove =
           nextValidMoves &&
           nextValidMoves.some(
@@ -113,6 +153,19 @@ function App() {
           );
 
         if (!isPawnMove) return;
+
+        if (square.coordinate[1] === 8 || square.coordinate[1] === 1) {
+          setIsPromoting({ ...selectedPiece, color: color });
+          console.log("//////////", selectedPiece);
+
+          console.log(`${color} about to promote.........`);
+          console.log("...........", selectedPiece);
+
+          // todo: place game state on hold while promoting
+          return;
+        }
+
+        console.log("..................,", square.piece);
       }
 
       // If its a Bishop
@@ -164,11 +217,7 @@ function App() {
       }
 
       // Move the piece if its a valid move
-      movePiece(
-        square.color,
-        selectedPiece.squareId as string,
-        square.squareId
-      );
+      movePiece(selectedPiece.squareId as string, square.squareId);
     } else if (square.piece) {
       setSelectedPiece({
         coordinate: square.coordinate,
@@ -177,7 +226,7 @@ function App() {
       });
     }
 
-    //console.log("SQUARE:", square);
+    console.log("SQUARE:", square);
     //console.log("valid moves:", validMoves);
     setTimeout(() => setShakingSquareId(null), 300);
   }
@@ -188,6 +237,7 @@ function App() {
     setViewLabel(false);
     setShakingSquareId(null);
     setSelectedPiece(null);
+    setIsPromoting(null);
   }
 
   function toggleLabels() {
@@ -195,7 +245,7 @@ function App() {
   }
 
   return (
-    <main>
+    <main className="main">
       <Board
         board={board}
         handleClick={handleClick}
@@ -206,6 +256,13 @@ function App() {
         }}
       />
       <GameControls resetGame={resetGame} toggleLabels={toggleLabels} />
+      {isPromoting && (
+        <PromotionUI
+          color={isPromoting.color}
+          handleClick={handleClick}
+          promotingSquare={isPromoting}
+        />
+      )}
     </main>
   );
 }
