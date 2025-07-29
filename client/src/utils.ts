@@ -11,6 +11,7 @@ import bN from "./assets/pieces/bN.svg";
 import bB from "./assets/pieces/bB.svg";
 import bR from "./assets/pieces/bR.svg";
 import type { BoardState } from "./board.class";
+import { getKnightMoves, getSlidingMoves } from "./piece-moves";
 
 export const piecesMap: any = {
   wP,
@@ -105,3 +106,88 @@ export function getKingSquares(squareId: string, board: BoardState): string[] {
 
   return emptySquares;
 }
+
+export function getPawnAttackingSquares(
+  board: BoardState,
+  coordinate: [number, number],
+  color: string
+): Square[] {
+  const [x, y] = coordinate;
+  const direction = color === "w" ? 1 : -1;
+
+  const targets: [number, number][] = [
+    [x - 1, y + direction],
+    [x + 1, y + direction],
+  ];
+
+  return board
+    .flat()
+    .filter((square) =>
+      targets.some(
+        ([tx, ty]) => square.coordinate[0] === tx && square.coordinate[1] === ty
+      )
+    );
+}
+
+export function getEnemyAttackingSquare(board: BoardState, enemyColor: string) {
+  const enemyPieces = board.flat().filter((sq) => {
+    if (sq.piece?.name[0] === enemyColor) return sq;
+  });
+  let attackedSquares: Square[] = [];
+
+  for (let i = 0; i < enemyPieces.length; i++) {
+    const coordinate = enemyPieces[i]?.coordinate as [number, number];
+    if (enemyPieces[i]?.piece?.name[1] === "P") {
+      const moves =
+        getPawnAttackingSquares(board, coordinate, enemyColor) || false;
+      attackedSquares.push(...moves);
+    }
+
+    if (enemyPieces[i]?.piece?.name[1] === "N") {
+      const moves = getKnightMoves(board, coordinate, enemyColor) || false;
+      attackedSquares.push(...moves);
+    }
+
+    if (enemyPieces[i]?.piece?.name[1] === "R") {
+      const moves =
+        getSlidingMoves(board, coordinate, enemyColor, [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]) || false;
+      attackedSquares.push(...moves);
+    }
+
+    if (enemyPieces[i]?.piece?.name[1] === "B") {
+      const moves =
+        getSlidingMoves(board, coordinate, enemyColor, [
+          [1, 1],
+          [-1, 1],
+          [1, -1],
+          [-1, -1],
+        ]) || false;
+      attackedSquares.push(...moves);
+    }
+
+    if (enemyPieces[i]?.piece?.name[1] === "Q") {
+      const moves =
+        getSlidingMoves(board, coordinate, enemyColor, [
+          [1, 1],
+          [-1, 1],
+          [1, -1],
+          [-1, -1],
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]) || false;
+      attackedSquares.push(...moves);
+    }
+  }
+  return attackedSquares;
+}
+
+// function isSquareAttacked(square: Square, board: BoardState) {
+//   const enemyMoves = getAllPosibleMoves(board, attackerColor);
+// }

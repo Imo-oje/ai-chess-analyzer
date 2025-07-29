@@ -5,6 +5,7 @@ import GameControls from "./game-controls";
 import { useState } from "react";
 import {
   createBoard,
+  getEnemyAttackingSquare,
   hasSameColor,
   piecesMap,
   type Piece,
@@ -26,6 +27,10 @@ function App() {
   } | null>(null);
 
   let NEW_PIECE: Piece = null;
+
+  /////
+  getEnemyAttackingSquare(board, "w");
+  /////
 
   function movePiece(from: string, to: string) {
     console.log("while moving", isPromoting);
