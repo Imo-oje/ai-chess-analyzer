@@ -5,7 +5,6 @@ import GameControls from "./game-controls";
 import { useState } from "react";
 import {
   createBoard,
-  getEnemyAttackingSquare,
   hasSameColor,
   piecesMap,
   type Piece,
@@ -17,7 +16,10 @@ import PromotionUI from "./promotion";
 function App() {
   const [board, setBoard] = useState<BoardState>(createBoard(piecesMap));
   const [viewLabel, setViewLabel] = useState(false);
-  const [shakingSquareId, setShakingSquareId] = useState<string | null>(null);
+  const [clickedPiece, setclickedPiece] = useState<{
+    selectedPieceColor: string;
+    squareId: string;
+  } | null>(null);
   const [validMoves, setValidMoves] = useState<Square[] | false>(false);
   const [isPromoting, setIsPromoting] = useState<Square | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<{
@@ -29,7 +31,7 @@ function App() {
   let NEW_PIECE: Piece = null;
 
   /////
-  getEnemyAttackingSquare(board, "w");
+  //const attacked = getEnemyAttackingSquare(board, "w");
   /////
 
   function movePiece(from: string, to: string) {
@@ -59,7 +61,10 @@ function App() {
   }
 
   function handleClick(square: Square, promotingTo?: string) {
-    setShakingSquareId(square.squareId);
+    setclickedPiece({
+      selectedPieceColor: square.piece?.name[0] as string,
+      squareId: square.squareId,
+    });
 
     let nextValidMoves: Square[] | false = false;
 
@@ -233,15 +238,19 @@ function App() {
 
     console.log("SQUARE:", square);
     //console.log("valid moves:", validMoves);
-    setTimeout(() => setShakingSquareId(null), 300);
+    setTimeout(
+      () =>
+        setclickedPiece((prev) => (prev ? { ...prev, squareId: "" } : null)),
+      300
+    );
   }
 
   function resetGame() {
     setBoard(createBoard(piecesMap));
     setValidMoves(false);
     setViewLabel(false);
-    setShakingSquareId(null);
     setSelectedPiece(null);
+    setclickedPiece(null);
     setIsPromoting(null);
   }
 
@@ -256,8 +265,12 @@ function App() {
         handleClick={handleClick}
         viewLabel={viewLabel}
         effects={{
-          shakingSquareId: shakingSquareId,
-          validMoves: validMoves,
+          shakingSquareId: clickedPiece?.squareId as string,
+          sourcePieceColor: clickedPiece?.selectedPieceColor as string,
+          validMoves,
+          // (validMoves || []).filter(
+          //   (mvs) => mvs.piece?.name[0] !== "w"
+          // ),
         }}
       />
       <GameControls resetGame={resetGame} toggleLabels={toggleLabels} />

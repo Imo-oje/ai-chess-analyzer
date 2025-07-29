@@ -13,6 +13,7 @@ function Board({
   effects: {
     shakingSquareId: string | null;
     validMoves: Square[] | false;
+    sourcePieceColor: string | null;
   };
 }) {
   return (
@@ -29,11 +30,15 @@ function Board({
                 (effects.validMoves || []).some(
                   (move) =>
                     move.coordinate[0] === square.coordinate[0] &&
-                    move.coordinate[1] === square.coordinate[1]
+                    move.coordinate[1] === square.coordinate[1] &&
+                    (!square.piece ||
+                      square.piece.name[0] !== effects.sourcePieceColor)
                 )
                   ? "square_highlight"
                   : ""
-              }`}
+              }
+
+`}
             >
               {square.piece ? (
                 <img src={square.piece.icon} />

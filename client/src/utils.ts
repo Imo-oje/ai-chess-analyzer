@@ -144,7 +144,7 @@ export function getEnemyAttackingSquare(board: BoardState, enemyColor: string) {
     }
 
     if (enemyPieces[i]?.piece?.name[1] === "N") {
-      const moves = getKnightMoves(board, coordinate, enemyColor) || false;
+      const moves = getKnightMoves(board, coordinate) || false;
       attackedSquares.push(...moves);
     }
 

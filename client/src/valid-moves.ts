@@ -35,7 +35,7 @@ export default function findValidMoves(
     case "P":
       return getPawnMoves(board, coordinate, color) || false;
     case "N":
-      return getKnightMoves(board, coordinate, color) || false;
+      return getKnightMoves(board, coordinate) || false;
     case "B":
       return (
         getSlidingMoves(board, coordinate, color, [

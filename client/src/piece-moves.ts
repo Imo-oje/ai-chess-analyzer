@@ -66,9 +66,9 @@ export function getPawnMoves(
 
 export function getKnightMoves(
   board: BoardState,
-  [x, y]: [number, number],
-  color: string
-): Square[] {
+  [x, y]: [number, number]
+): // color: string
+Square[] {
   const offsets = [
     [2, 1],
     [1, 2],
@@ -83,14 +83,10 @@ export function getKnightMoves(
     .map(([dx, dy]) => [x + dx, y + dy])
     .filter(([nx, ny]) => nx >= 1 && nx <= 8 && ny >= 1 && ny <= 8)
     .map(([nx, ny]) =>
-      board
-        .flat()
-        .find(
-          (s) =>
-            s.coordinate[0] === nx &&
-            s.coordinate[1] === ny &&
-            (!s.piece || s.piece.name[0].toLowerCase() !== color)
-        )
+      board.flat().find(
+        (s) => s.coordinate[0] === nx && s.coordinate[1] === ny
+        // (!s.piece || s.piece.name[0].toLowerCase() !== color)
+      )
     )
     .filter(Boolean) as Square[];
 }
@@ -111,6 +107,7 @@ export function getSlidingMoves(
       const square = board
         .flat()
         .find((sq) => sq.coordinate[0] === cx && sq.coordinate[1] === cy);
+      // sq.piece?.name[0] !== color
 
       if (!square) break;
 
