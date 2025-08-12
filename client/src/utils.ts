@@ -12,6 +12,8 @@ import bB from "./assets/pieces/bB.svg";
 import bR from "./assets/pieces/bR.svg";
 import type { BoardState } from "./board.class";
 import { getKnightMoves, getSlidingMoves } from "./piece-moves";
+import type { CastleState } from "./App";
+import findValidMoves from "./valid-moves";
 
 export const piecesMap: any = {
   wP,
@@ -269,4 +271,51 @@ export function moveInBoard(board: BoardState, from: string, to: string) {
       return square;
     })
   );
+}
+
+export function isCheckmate(
+  board: BoardState,
+  currentPlayer: "w" | "b",
+  castleState: CastleState,
+  enPassantTarget?: [number, number]
+): boolean {
+  // 1. Check if king is in check
+  const kingInCheck = isInCheck(board, currentPlayer);
+  if (!kingInCheck) return false;
+
+  // 2. Generate all moves for current player
+  const allMoves = [];
+  for (const row of board) {
+    for (const sq of row) {
+      if (sq.piece?.name[0] === currentPlayer) {
+        const moves = findValidMoves(
+          board,
+          sq.coordinate,
+          castleState,
+          enPassantTarget
+        );
+        allMoves.push({ from: sq.squareId, moves });
+      }
+    }
+  }
+
+  // 3. Check if any move escapes check
+  for (const { from, moves } of allMoves) {
+    for (const to of moves) {
+      const boardCopy: BoardState = board.map((row) =>
+        row.map((square) => ({
+          ...square,
+          piece: square.piece ? { ...square.piece } : null,
+        }))
+      );
+
+      moveInBoard(boardCopy, from, to.squareId);
+      if (!isInCheck(boardCopy, currentPlayer)) {
+        return false; // Found a move to escape check
+      }
+    }
+  }
+
+  // 4. No moves to escape, checkmate!
+  return true;
 }

@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   createBoard,
   hasSameColor,
+  isCheckmate,
   markCheckedKing,
   moveInBoard,
   piecesMap,
@@ -14,6 +15,7 @@ import {
 } from "./utils";
 import findValidMoves from "./valid-moves";
 import PromotionUI from "./promotion";
+import GameOverUI from "./components/game-over";
 
 type IsPromoting = Square & { targetSquareId: string };
 
@@ -24,6 +26,11 @@ export interface CastleState {
   bKingMoved: boolean;
   bRookKingsideMoved: boolean;
   bRookQueensideMoved: boolean;
+}
+
+export interface GameOver {
+  winner: string;
+  reason: "checkmate" | "abandonment" | "resignation" | "timeout";
 }
 
 function App() {
@@ -50,6 +57,7 @@ function App() {
     wRookQueensideMoved: false,
   });
   const [enPassantTarget, setEnPassantTarget] = useState<[number, number]>();
+  const [gameOver, setGameOver] = useState<GameOver>();
 
   let NEW_PIECE: Piece = null;
 
@@ -133,6 +141,13 @@ function App() {
       );
 
       setEnPassantTarget(newEnPassantTarget);
+
+      // Checkmate
+      const nextPlayer = currentPlayer === "w" ? "b" : "w";
+      if (isCheckmate(newBoard, nextPlayer, castleState)) {
+        setGameOver({ winner: currentPlayer, reason: "checkmate" });
+      }
+
       return newBoard;
     });
 
@@ -194,8 +209,8 @@ function App() {
       };
 
       // Replace the target with the new piece and clear the pawn's old square
-      setBoard((prevBoard) =>
-        prevBoard.map((row) =>
+      setBoard((prevBoard) => {
+        const newBoard = prevBoard.map((row) =>
           row.map((sq) => {
             if (sq.squareId === isPromoting.targetSquareId) {
               return { ...sq, piece: NEW_PIECE };
@@ -205,8 +220,15 @@ function App() {
             }
             return sq;
           })
-        )
-      );
+        );
+
+        // Checkmate
+        const nextPlayer = currentPlayer === "w" ? "b" : "w";
+        if (isCheckmate(newBoard, nextPlayer, castleState)) {
+          setGameOver({ winner: currentPlayer, reason: "checkmate" });
+        }
+        return newBoard;
+      });
 
       setIsPromoting(null);
       setCurrentPlayer((p) => (p === "w" ? "b" : "w"));
@@ -287,6 +309,9 @@ function App() {
         castleState,
         enPassantTarget
       );
+
+      console.log("Next valid moves", nextValidMoves);
+      console.log("Valid moves", validMoves);
 
       if (square.piece) {
         setSelectedPiece({
@@ -475,6 +500,7 @@ function App() {
       wRookQueensideMoved: false,
     });
     setEnPassantTarget(undefined);
+    setGameOver(undefined);
     NEW_PIECE = null;
   }
 
@@ -505,6 +531,8 @@ function App() {
           promotingSquare={isPromoting}
         />
       )}
+
+      {gameOver && <GameOverUI gameDetails={gameOver} />}
     </main>
   );
 }
