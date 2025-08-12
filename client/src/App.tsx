@@ -7,6 +7,7 @@ import {
   createBoard,
   hasSameColor,
   markCheckedKing,
+  moveInBoard,
   piecesMap,
   type Piece,
   type Square,
@@ -14,50 +15,248 @@ import {
 import findValidMoves from "./valid-moves";
 import PromotionUI from "./promotion";
 
+type IsPromoting = Square & { targetSquareId: string };
+
+export interface CastleState {
+  wKingMoved: boolean;
+  wRookKingsideMoved: boolean;
+  wRookQueensideMoved: boolean;
+  bKingMoved: boolean;
+  bRookKingsideMoved: boolean;
+  bRookQueensideMoved: boolean;
+}
+
 function App() {
   const [board, setBoard] = useState<BoardState>(createBoard(piecesMap));
+  const [currentPlayer, setCurrentPlayer] = useState<"w" | "b">("w");
   const [viewLabel, setViewLabel] = useState(false);
   const [clickedPiece, setclickedPiece] = useState<{
     selectedPieceColor: string;
     squareId: string;
   } | null>(null);
   const [validMoves, setValidMoves] = useState<Square[]>([]);
-  const [isPromoting, setIsPromoting] = useState<Square | null>(null);
+  const [isPromoting, setIsPromoting] = useState<IsPromoting | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<{
     squareId: string;
     coordinate: [number, number];
     piece: { name: string; icon: string } | null;
   } | null>(null);
+  const [castleState, setCastleState] = useState<CastleState>({
+    bKingMoved: false,
+    bRookKingsideMoved: false,
+    bRookQueensideMoved: false,
+    wKingMoved: false,
+    wRookKingsideMoved: false,
+    wRookQueensideMoved: false,
+  });
+  const [enPassantTarget, setEnPassantTarget] = useState<[number, number]>();
 
   let NEW_PIECE: Piece = null;
 
   function movePiece(from: string, to: string) {
-    console.log("while moving", isPromoting);
-    setBoard((prevBoard) =>
-      prevBoard.map((row) =>
-        row.map((square) => {
-          if (square.squareId === to) {
-            const fromSquare = prevBoard
-              .flat()
-              .find((sq) => sq.squareId === from);
-            return {
-              ...square,
-              piece: isPromoting ? NEW_PIECE : fromSquare?.piece || null,
-            }; // set target
+    setBoard((prevBoard) => {
+      let newBoard = [...prevBoard];
+
+      const fromSquare = newBoard.flat().find((sq) => sq.squareId === from);
+      if (!fromSquare?.piece) return prevBoard;
+
+      const piece = fromSquare.piece;
+      const color = piece.name[0];
+      const isPawn = piece.name[1] === "P";
+
+      // -------------------------
+      // Update castle state if King or Rook moves
+      setCastleState((prev) => {
+        let updated = { ...prev };
+
+        if (piece.name[1] === "K") {
+          if (color === "w") updated.wKingMoved = true;
+          else updated.bKingMoved = true;
+        }
+
+        if (piece.name[1] === "R") {
+          if (color === "w") {
+            if (from === "h1") updated.wRookKingsideMoved = true;
+            if (from === "a1") updated.wRookQueensideMoved = true;
+          } else {
+            if (from === "h8") updated.bRookKingsideMoved = true;
+            if (from === "a8") updated.bRookQueensideMoved = true;
           }
-          if (square.squareId === from) {
-            return { ...square, piece: null }; // clear origin square
-          }
-          return square;
+        }
+
+        return updated;
+      });
+
+      // Parse coordinates once
+      const fromCoord = fromSquare.coordinate;
+      const toSquare = newBoard.flat().find((sq) => sq.squareId === to);
+      if (!toSquare) return prevBoard;
+      const toCoord = toSquare.coordinate;
+
+      // Handle en passant capture
+      if (
+        isPawn &&
+        toSquare.piece === null &&
+        fromCoord[0] !== toCoord[0] // diagonal move without piece (en passant)
+      ) {
+        const captureRank = color === "w" ? toCoord[1] - 1 : toCoord[1] + 1;
+        const captureCoord: [number, number] = [toCoord[0], captureRank];
+
+        newBoard = newBoard.map((row) =>
+          row.map((sq) => {
+            if (
+              sq.coordinate[0] === captureCoord[0] &&
+              sq.coordinate[1] === captureCoord[1]
+            ) {
+              return { ...sq, piece: null };
+            }
+            return sq;
+          })
+        );
+      }
+
+      // Set en passant target if pawn moved two squares
+      // en passant target is the square behind it
+      let newEnPassantTarget: [number, number] | undefined = undefined;
+      if (isPawn && Math.abs(toCoord[1] - fromCoord[1]) === 2) {
+        const epRank = (toCoord[1] + fromCoord[1]) / 2;
+        newEnPassantTarget = [toCoord[0], epRank];
+      }
+
+      // Normal move logic
+      newBoard = newBoard.map((row) =>
+        row.map((sq) => {
+          if (sq.squareId === to) return { ...sq, piece };
+          if (sq.squareId === from) return { ...sq, piece: null };
+          return sq;
         })
-      )
-    );
+      );
+
+      setEnPassantTarget(newEnPassantTarget);
+      return newBoard;
+    });
+
+    setCurrentPlayer(currentPlayer === "w" ? "b" : "w");
     setSelectedPiece(null);
     setIsPromoting(null);
+    setValidMoves([]);
+    setclickedPiece(null);
+    setEnPassantTarget(undefined);
+  }
+
+  function handleCastleMove(isKingside: boolean) {
+    const color = selectedPiece?.piece!.name[0];
+    const yRow = color === "w" ? 1 : 8; // rank for white or black
+    const rookFrom = isKingside ? `h${yRow}` : `a${yRow}`;
+    const rookTo = isKingside ? `f${yRow}` : `d${yRow}`;
+    const kingFrom = `e${yRow}`;
+    const kingTo = isKingside ? `g${yRow}` : `c${yRow}`;
+
+    setBoard((prevBoard) => {
+      let newBoard = [...prevBoard];
+      // Move king
+      newBoard = moveInBoard(newBoard, kingFrom, kingTo);
+      // Move rook
+      newBoard = moveInBoard(newBoard, rookFrom, rookTo);
+      return newBoard;
+    });
+
+    setCastleState((prev) => ({
+      ...prev,
+      ...(color === "w" ? { wKingMoved: true } : { bKingMoved: true }),
+      ...(isKingside
+        ? color === "w"
+          ? { wRookKingsideMoved: true }
+          : { bRookKingsideMoved: true }
+        : color === "w"
+        ? { wRookQueensideMoved: true }
+        : { bRookQueensideMoved: true }),
+    }));
+
+    setCurrentPlayer((p) => (p === "w" ? "b" : "w"));
+    setSelectedPiece(null);
     setValidMoves([]);
   }
 
   function handleClick(square: Square, promotingTo?: string) {
+    // =====================
+    // Promotion has highest priority
+    // =====================
+    if (isPromoting && promotingTo) {
+      const newPiece = Object.entries(piecesMap).find(
+        ([key]) => key === promotingTo
+      );
+      if (!newPiece) return;
+
+      NEW_PIECE = {
+        name: promotingTo,
+        icon: newPiece[1] as string,
+      };
+
+      // Replace the target with the new piece and clear the pawn's old square
+      setBoard((prevBoard) =>
+        prevBoard.map((row) =>
+          row.map((sq) => {
+            if (sq.squareId === isPromoting.targetSquareId) {
+              return { ...sq, piece: NEW_PIECE };
+            }
+            if (sq.squareId === isPromoting.squareId) {
+              return { ...sq, piece: null };
+            }
+            return sq;
+          })
+        )
+      );
+
+      setIsPromoting(null);
+      setCurrentPlayer((p) => (p === "w" ? "b" : "w"));
+      setSelectedPiece(null);
+      setValidMoves([]);
+      return;
+    }
+
+    const isSelecting = !selectedPiece; // no piece selected yet
+    const isMoving = !!selectedPiece; // we already have a piece selected
+
+    if (isSelecting) {
+      // Only allow selecting your own pieces
+      if (!square.piece || square.piece.name[0] !== currentPlayer) return;
+
+      setSelectedPiece({
+        coordinate: square.coordinate,
+        squareId: square.squareId,
+        piece: square.piece,
+      });
+
+      setValidMoves(
+        findValidMoves(board, square.coordinate, castleState, enPassantTarget)
+      );
+      return;
+    }
+
+    if (isMoving) {
+      // Block moving onto your own piece
+      if (square.piece && square.piece.name[0] === currentPlayer) {
+        // Clicking your own piece = reselect it
+        setSelectedPiece({
+          coordinate: square.coordinate,
+          squareId: square.squareId,
+          piece: square.piece,
+        });
+        setValidMoves(
+          findValidMoves(board, square.coordinate, castleState, enPassantTarget)
+        );
+        return;
+      }
+
+      // Allow empty squares or opponent's piece (capture)
+      const [x, y] = square.coordinate;
+      const isValid = validMoves.some(
+        (dest) => dest.coordinate[0] === x && dest.coordinate[1] === y
+      );
+      if (!isValid) return;
+    }
+
     setclickedPiece({
       selectedPieceColor: square.piece?.name[0] as string,
       squareId: square.squareId,
@@ -66,7 +265,12 @@ function App() {
     let nextValidMoves: Square[] = [];
 
     if (square.piece) {
-      nextValidMoves = findValidMoves(board, square.coordinate);
+      nextValidMoves = findValidMoves(
+        board,
+        square.coordinate,
+        castleState,
+        enPassantTarget
+      );
       setValidMoves(nextValidMoves);
     }
 
@@ -77,7 +281,12 @@ function App() {
     setBoard(updatedBoard);
 
     if (selectedPiece) {
-      nextValidMoves = findValidMoves(board, selectedPiece.coordinate);
+      nextValidMoves = findValidMoves(
+        board,
+        selectedPiece.coordinate,
+        castleState,
+        enPassantTarget
+      );
 
       if (square.piece) {
         setSelectedPiece({
@@ -85,7 +294,9 @@ function App() {
           squareId: square.squareId,
           piece: square.piece,
         });
-        setValidMoves(findValidMoves(board, square.coordinate));
+        setValidMoves(
+          findValidMoves(board, square.coordinate, castleState, enPassantTarget)
+        );
       } else {
         setSelectedPiece(null);
         setValidMoves([]);
@@ -123,22 +334,6 @@ function App() {
 
       console.log("currently selected", selectedPiece);
 
-      // Handle Promotion
-      if (isPromoting) {
-        const newPiece = Object.entries(piecesMap).filter(
-          ([key]) => key === promotingTo
-        );
-
-        const replceMent: Piece = {
-          name: promotingTo as string,
-          icon: newPiece[0][1] as string,
-        };
-
-        NEW_PIECE = replceMent;
-        console.log("newwwwwwwwwwwww", NEW_PIECE);
-        return movePiece(square.squareId, selectedPiece.squareId);
-      }
-
       // If its a knight
       if (selectedPiece.piece?.name[1] === "N") {
         const [x, y] = square.coordinate;
@@ -165,9 +360,12 @@ function App() {
         if (!isPawnMove) return;
 
         if (square.coordinate[1] === 8 || square.coordinate[1] === 1) {
-          setIsPromoting({ ...selectedPiece, color: color });
-          console.log("//////////", selectedPiece);
-
+          setIsPromoting({
+            ...selectedPiece,
+            color: color,
+            targetSquareId: square.squareId,
+          });
+          //console.log("//////////", selectedPiece);
           console.log(`${color} about to promote.........`);
           console.log("...........", selectedPiece);
 
@@ -217,6 +415,7 @@ function App() {
       // If its a King
       if (selectedPiece.piece?.name[1] === "K") {
         const [x, y] = square.coordinate;
+
         const kingMove =
           nextValidMoves &&
           nextValidMoves.some(
@@ -224,6 +423,20 @@ function App() {
           );
 
         if (!kingMove) return;
+
+        // Castling: Check if the move is 2 squares horizontally
+        const isKingsideCastle =
+          Math.abs(square.coordinate[0] - selectedPiece.coordinate[0]) === 2 &&
+          square.coordinate[0] > selectedPiece.coordinate[0];
+
+        const isQueensideCastle =
+          Math.abs(square.coordinate[0] - selectedPiece.coordinate[0]) === 2 &&
+          square.coordinate[0] < selectedPiece.coordinate[0];
+
+        if (isKingsideCastle || isQueensideCastle) {
+          handleCastleMove(isKingsideCastle);
+          return;
+        }
       }
 
       // Move the piece if its a valid move
@@ -252,6 +465,17 @@ function App() {
     setSelectedPiece(null);
     setclickedPiece(null);
     setIsPromoting(null);
+    setCurrentPlayer("w");
+    setCastleState({
+      bKingMoved: false,
+      bRookKingsideMoved: false,
+      bRookQueensideMoved: false,
+      wKingMoved: false,
+      wRookKingsideMoved: false,
+      wRookQueensideMoved: false,
+    });
+    setEnPassantTarget(undefined);
+    NEW_PIECE = null;
   }
 
   function toggleLabels() {

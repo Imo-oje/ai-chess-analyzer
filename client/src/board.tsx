@@ -1,4 +1,5 @@
 import type { BoardState } from "./board.class";
+import SquareTile from "./square-tile";
 import type { Square } from "./utils";
 
 function Board({
@@ -8,7 +9,7 @@ function Board({
   effects,
 }: {
   board: BoardState;
-  handleClick: Function;
+  handleClick: (square: Square) => void;
   viewLabel: boolean;
   effects: {
     shakingSquareId: string | null;
@@ -17,45 +18,35 @@ function Board({
   };
 }) {
   return (
-    <>
-      <div className="board">
-        {board.map((row, index) => (
-          <div key={index} className="row">
-            {row.map((square) => (
-              <div
-                onClick={() => handleClick(square)}
+    <div className="board">
+      {board.map((row, rowIndex) => (
+        <div key={rowIndex} className="row">
+          {row.map((square) => {
+            const isShaking = effects.shakingSquareId === square.squareId;
+            const isHighlighted = effects.validMoves.some(
+              (move) =>
+                move.coordinate[0] === square.coordinate[0] &&
+                move.piece?.name[1] !== "K" &&
+                move.coordinate[1] === square.coordinate[1] &&
+                (!square.piece ||
+                  square.piece.name[0] !== effects.sourcePieceColor)
+            );
+
+            return (
+              <SquareTile
                 key={square.squareId}
-                className={`${square.isChecked ? "checked_king" : ""} square ${
-                  square.color
-                } ${
-                  effects.shakingSquareId === square.squareId ? "shake" : ""
-                } ${
-                  effects.validMoves.some(
-                    (move) =>
-                      move.coordinate[0] === square.coordinate[0] &&
-                      move.piece?.name[1] !== "K" &&
-                      move.coordinate[1] === square.coordinate[1] &&
-                      (!square.piece ||
-                        square.piece.name[0] !== effects.sourcePieceColor)
-                  )
-                    ? "square_highlight"
-                    : ""
-                }
-`}
-              >
-                {square.piece ? (
-                  <img src={square.piece.icon} />
-                ) : viewLabel ? (
-                  square.squareId
-                ) : (
-                  ""
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </>
+                square={square}
+                onClick={handleClick}
+                isChecked={square.isChecked as boolean}
+                isShaking={isShaking}
+                isHighlighted={isHighlighted}
+                viewLabel={viewLabel}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </div>
   );
 }
 

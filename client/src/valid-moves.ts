@@ -7,9 +7,13 @@ import {
   getKingMoves,
 } from "./piece-moves";
 import { isInCheck, simulateMove } from "./utils";
+import type { CastleState } from "./App";
+
 export default function findValidMoves(
   board: BoardState,
-  coordinate: [number, number]
+  coordinate: [number, number],
+  castleState: CastleState,
+  enPassantTarget?: [number, number]
 ): Square[] | [] {
   const square = board
     .flat()
@@ -35,7 +39,8 @@ export default function findValidMoves(
 
   switch (pieceType) {
     case "P":
-      normalMoves = getPawnMoves(board, coordinate, color) || [];
+      normalMoves =
+        getPawnMoves(board, coordinate, color, enPassantTarget) || [];
       break;
     case "N":
       normalMoves = getKnightMoves(board, coordinate) || [];
@@ -72,7 +77,10 @@ export default function findValidMoves(
         ]) || [];
       break;
     case "K":
-      return getKingMoves(board, coordinate, color, oppKing.squareId) || [];
+      return (
+        getKingMoves(board, coordinate, color, oppKing.squareId, castleState) ||
+        []
+      );
   }
   const legalMoves = normalMoves.filter((targetSquare) => {
     const newBoard = simulateMove(board, coordinate, targetSquare.coordinate);

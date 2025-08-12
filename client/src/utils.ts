@@ -196,10 +196,6 @@ export function getEnemyAttackingSquare(board: BoardState, enemyColor: string) {
   return attackedSquares;
 }
 
-// function isSquareAttacked(square: Square, board: BoardState) {
-//   const enemyMoves = getAllPosibleMoves(board, attackerColor);
-// }
-
 // Clone the board and simulate move manually then return simulated board
 export function simulateMove(
   board: BoardState,
@@ -258,4 +254,19 @@ export function markCheckedKing(
   }
 
   return newBoard;
+}
+
+export function moveInBoard(board: BoardState, from: string, to: string) {
+  return board.map((row) =>
+    row.map((square) => {
+      if (square.squareId === to) {
+        const fromSquare = board.flat().find((sq) => sq.squareId === from);
+        return { ...square, piece: fromSquare?.piece || null };
+      }
+      if (square.squareId === from) {
+        return { ...square, piece: null };
+      }
+      return square;
+    })
+  );
 }
