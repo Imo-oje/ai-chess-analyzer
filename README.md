@@ -2,6 +2,8 @@
 
 A fully functional chess game built with React and TypeScript. This project supports classic chess gameplay, including castling, en passant, promotion, and check detection.
 
+[Live preview](https://ai-chess-analyzer.vercel.app/)
+
 ---
 
 ## Features
