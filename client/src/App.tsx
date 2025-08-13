@@ -5,8 +5,10 @@ import GameControls from "./game-controls";
 import { useState } from "react";
 import {
   createBoard,
+  getKingSquare,
   hasSameColor,
   isCheckmate,
+  isInCheck,
   markCheckedKing,
   moveInBoard,
   piecesMap,
@@ -57,6 +59,7 @@ function App() {
     wRookQueensideMoved: false,
   });
   const [enPassantTarget, setEnPassantTarget] = useState<[number, number]>();
+  const [checkedSquare, setCheckedSquare] = useState<[number, number]>();
   const [gameOver, setGameOver] = useState<GameOver>();
 
   let NEW_PIECE: Piece = null;
@@ -142,15 +145,21 @@ function App() {
 
       setEnPassantTarget(newEnPassantTarget);
 
-      // Checkmate
       const nextPlayer = currentPlayer === "w" ? "b" : "w";
+      if (isInCheck(newBoard, nextPlayer)) {
+        const kingSquare = getKingSquare(newBoard, nextPlayer);
+        setCheckedSquare(kingSquare?.coordinate);
+        console.log("CHECK: ", checkedSquare);
+      }
+
+      // Checkmate
       if (isCheckmate(newBoard, nextPlayer, castleState)) {
         setGameOver({ winner: currentPlayer, reason: "checkmate" });
       }
 
       return newBoard;
     });
-
+    setCheckedSquare(undefined);
     setCurrentPlayer(currentPlayer === "w" ? "b" : "w");
     setSelectedPiece(null);
     setIsPromoting(null);
@@ -222,8 +231,14 @@ function App() {
           })
         );
 
-        // Checkmate
         const nextPlayer = currentPlayer === "w" ? "b" : "w";
+        if (isInCheck(newBoard, nextPlayer)) {
+          const kingSquare = getKingSquare(newBoard, nextPlayer);
+          setCheckedSquare(kingSquare?.coordinate);
+          console.log("CHECK: ", checkedSquare);
+        }
+
+        // Checkmate
         if (isCheckmate(newBoard, nextPlayer, castleState)) {
           setGameOver({ winner: currentPlayer, reason: "checkmate" });
         }
@@ -500,6 +515,7 @@ function App() {
       wRookQueensideMoved: false,
     });
     setEnPassantTarget(undefined);
+    setCheckedSquare(undefined);
     setGameOver(undefined);
     NEW_PIECE = null;
   }
@@ -521,6 +537,7 @@ function App() {
           shakingSquareId: clickedPiece?.squareId as string,
           sourcePieceColor: clickedPiece?.selectedPieceColor as string,
           validMoves,
+          checkedSquare,
         }}
       />
       <GameControls resetGame={resetGame} toggleLabels={toggleLabels} />

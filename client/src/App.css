@@ -62,26 +62,21 @@ section.game-controls {
 }
 
 .square_highlight {
-  /* background: radial-gradient(
-    circle,
-    rgba(100, 149, 237, 0.6) 0%,
-    transparent 70%
-  ); */
   background: radial-gradient(
     circle,
-    rgba(0, 200, 150, 0.4) 0%,
-    transparent 70%
+    rgba(100, 149, 237, 0.6) 20%,
+    transparent 40%
   );
   transition: all 300ms ease-in-out;
 }
 
 .board .black {
-  background-color: #8b4513;
+  background-color: rgb(78, 120, 55);
   color: white;
 }
 
 .board .white {
-  background-color: white;
+  background-color: rgb(221, 228, 213);
   color: black;
 }
 
@@ -150,12 +145,12 @@ section.game-controls {
   100% {
     background-color: rgba(255, 0, 0, 0.2);
   }
-  50% {
+  0% {
     background-color: rgba(255, 0, 0, 0.6);
   }
 }
 
 .checked_king {
-  animation: flash-red 1s ease-in-out infinite;
+  animation: flash-red 1s ease-in-out 100ms;
   background-color: rgba(255, 0, 0, 0.2);
 }

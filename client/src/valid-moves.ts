@@ -82,6 +82,7 @@ export default function findValidMoves(
         []
       );
   }
+  normalMoves = normalMoves.filter((sq) => sq.piece?.name[0] !== color);
   const legalMoves = normalMoves.filter((targetSquare) => {
     const newBoard = simulateMove(board, coordinate, targetSquare.coordinate);
     return !isInCheck(newBoard, color as "w" | "b");

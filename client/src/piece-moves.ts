@@ -119,20 +119,19 @@ export function getSlidingMoves(
       const square = board
         .flat()
         .find((sq) => sq.coordinate[0] === cx && sq.coordinate[1] === cy);
-      // sq.piece?.name[0] !== color
+      //sq.piece?.name[0] !== color
 
       if (!square) break;
 
       moves.push(square);
 
-      // Stop if we hit any piece that is not the enemy piece
-      if (square.piece) {
+      if (!square.piece) {
+        moves.push(square);
+      } else {
         const isEnemyKing =
           square.piece.name === (color === "w" ? "bK" : "wK") ||
           square.piece.name === (color === "b" ? "wK" : "bK");
-
-        if (!isEnemyKing) break;
-        // else: keep going through the king so squares behind king is attacked.
+        if (!isEnemyKing) break; // break if not enemy king; continue if king is on the way - so that squares behind it is attacked also.
       }
 
       cx += dx;

@@ -15,6 +15,7 @@ function Board({
     shakingSquareId: string | null;
     validMoves: Square[];
     sourcePieceColor: string | null;
+    checkedSquare: [number, number] | undefined;
   };
 }) {
   return (
@@ -37,7 +38,7 @@ function Board({
                 key={square.squareId}
                 square={square}
                 onClick={handleClick}
-                isChecked={square.isChecked as boolean}
+                isChecked={square.coordinate === effects.checkedSquare}
                 isShaking={isShaking}
                 isHighlighted={isHighlighted}
                 viewLabel={viewLabel}

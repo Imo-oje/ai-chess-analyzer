@@ -36,7 +36,6 @@ export type Square = {
   squareId: string;
   coordinate: [number, number];
   color: string;
-  isChecked?: boolean;
   piece: Piece;
 };
 
@@ -104,7 +103,6 @@ export function getKingSquares(squareId: string, board: BoardState): string[] {
       const newSquare = files[newFileIndex] + newRank;
       if (board.flat().some((sq) => sq.squareId === newSquare))
         emptySquares.push(newSquare);
-      console.log("emptySquares: ", emptySquares);
     }
   }
 
@@ -194,6 +192,16 @@ export function getEnemyAttackingSquare(board: BoardState, enemyColor: string) {
         ]) || false;
       attackedSquares.push(...moves);
     }
+
+    if (enemyPieces[i]?.piece?.name[1] === "K") {
+      const kingSquareId = enemyPieces[i].squareId;
+      const kingMoves = getKingSquares(kingSquareId, board);
+      attackedSquares.push(
+        ...kingMoves
+          .map((sqId) => board.flat().find((sq) => sq.squareId === sqId)!)
+          .filter(Boolean)
+      );
+    }
   }
   return attackedSquares;
 }
@@ -229,11 +237,14 @@ export function simulateMove(
 
 export function isInCheck(board: BoardState, color: "w" | "b") {
   const kingSquare = getKingSquare(board, color);
+  if (!kingSquare) return false;
   const opponentColor = color === "w" ? "b" : "w";
 
   const allAttackedSquares = getEnemyAttackingSquare(board, opponentColor);
   return allAttackedSquares.some(
-    (sq) => sq.coordinate === kingSquare?.coordinate
+    (sq) =>
+      sq.coordinate[0] === kingSquare?.coordinate[0] &&
+      sq.coordinate[1] === kingSquare?.coordinate[1]
   );
 }
 
@@ -279,11 +290,11 @@ export function isCheckmate(
   castleState: CastleState,
   enPassantTarget?: [number, number]
 ): boolean {
-  // 1. Check if king is in check
+  // Check if king is in check
   const kingInCheck = isInCheck(board, currentPlayer);
   if (!kingInCheck) return false;
 
-  // 2. Generate all moves for current player
+  // Generate all moves for current player
   const allMoves = [];
   for (const row of board) {
     for (const sq of row) {
@@ -299,23 +310,31 @@ export function isCheckmate(
     }
   }
 
-  // 3. Check if any move escapes check
-  for (const { from, moves } of allMoves) {
+  const legalMoves = allMoves.map(({ from, moves }) => {
+    const filteredMoves = moves.filter((move) => move.piece?.name[1] !== "K");
+    return { from, moves: filteredMoves };
+  });
+
+  // console.log("all moves: ", allMoves);
+  // console.log("all lgalMoves: ", legalMoves);
+
+  // Check if any move escapes check
+  for (const { from, moves } of legalMoves) {
     for (const to of moves) {
-      const boardCopy: BoardState = board.map((row) =>
+      let boardCopy: BoardState = board.map((row) =>
         row.map((square) => ({
           ...square,
           piece: square.piece ? { ...square.piece } : null,
         }))
       );
 
-      moveInBoard(boardCopy, from, to.squareId);
+      boardCopy = moveInBoard(boardCopy, from, to.squareId);
       if (!isInCheck(boardCopy, currentPlayer)) {
         return false; // Found a move to escape check
       }
     }
   }
 
-  // 4. No moves to escape, checkmate!
+  // No moves to escape, checkmate!
   return true;
 }
