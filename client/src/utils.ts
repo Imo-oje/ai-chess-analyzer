@@ -315,9 +315,6 @@ export function isCheckmate(
     return { from, moves: filteredMoves };
   });
 
-  // console.log("all moves: ", allMoves);
-  // console.log("all lgalMoves: ", legalMoves);
-
   // Check if any move escapes check
   for (const { from, moves } of legalMoves) {
     for (const to of moves) {
